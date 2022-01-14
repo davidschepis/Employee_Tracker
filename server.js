@@ -1,7 +1,13 @@
 //packages
 const inquirer = require("inquirer");
+const mysql = require("mysql2");
+const express = require("express");
+const cTable = require("console.table");
 
-
+//set port
+const PORT = process.env.PORT || 3001;
+//set up express
+const app = express();
 
 
 
