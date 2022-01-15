@@ -3,6 +3,16 @@ const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const cTable = require("console.table");
 
+//setup db
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'root',
+    database: 'employee_tracker'
+},
+console.log("Connected to DB")
+);
+
 
 //this function prompts the user for input from the console
 const getUserInput = () => {
@@ -148,11 +158,20 @@ const handleResponse = (response) => {
 };
 
 const addDepartmentToDB = (name) => {
-
+    db.query(`insert into department (name) values ("${name}")`, (err, results) => {
+        if (err) {
+            console.err(err);
+        }
+        else {
+            //console.info(results);
+            console.info(`${name} department added to the db`);
+            getUserInput();
+        }
+    });
 };
 
 const getDepartmentNames = () => {
-
+    
 };
 
 const addNewRoleToDB = (name, salary, department) => {
@@ -176,7 +195,10 @@ const getEmployeeNames = () => {
 };
 
 const showDepartmentNames = () => {
-
+    db.promise().query(`select * from department`).then((response) => {
+        console.table(response[0]);
+    }).catch(console.log).then(() => db.end());
+    getUserInput();
 };
 
 const showRoles = () => {
