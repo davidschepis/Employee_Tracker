@@ -10,7 +10,7 @@ const db = mysql.createConnection({
     password: 'root',
     database: 'employee_tracker'
 },
-console.log("Connected to DB")
+    console.log("Connected to DB")
 );
 
 
@@ -31,8 +31,8 @@ const getUserInput = () => {
                     "Add An Employee",
                     "Update Employee Role",
                     "Quit"
-                ],
-            },
+                ]
+            }
         ]).then((response) => {
             handleResponse(response.userInput);
         }).catch((error) => {
@@ -43,11 +43,13 @@ const getUserInput = () => {
 //this function handles the prompt for adding a new department
 const createNewDepartment = () => {
     inquirer.prompt(
-        {
-            type: "input",
-            message: "Enter the department name",
-            name: "name",
-        }
+        [
+            {
+                type: "input",
+                message: "Enter the department name",
+                name: "name"
+            }
+        ]
     ).then((response) => {
         addDepartmentToDB(response.name);
     }).catch((error) => {
@@ -58,24 +60,26 @@ const createNewDepartment = () => {
 //this function handles the prompt for adding a new role
 const createNewRole = () => {
     inquirer.prompt(
-        {
-            type: "input",
-            message: "Enter the name of the role",
-            name: "name",
-        },
-        {
-            type: "input",
-            message: "Enter the salary for the role",
-            name: "salary",
-        },
-        {
-            type: "list",
-            message: "Which department does this role belong to?",
-            name: "department",
-            choices: getDepartmentNames()
-        }
+        [
+            {
+                type: "input",
+                message: "Enter the title of the role",
+                name: "title",
+            },
+            {
+                type: "input",
+                message: "Enter the salary for the role",
+                name: "salary",
+            },
+            {
+                type: "list",
+                message: "Which department does this role belong to?",
+                name: "department",
+                choices: getDepartmentNames()
+            }
+        ]
     ).then((response) => {
-        addNewRoleToDB(response.name, response.salary, response.department);
+        addNewRoleToDB(response.title, response.salary, response.department);
     }).catch((error) => {
         console.log(error);
     });
@@ -84,28 +88,30 @@ const createNewRole = () => {
 //this function handles the prompt for adding a new employee
 const createNewEmployee = () => {
     inquirer.prompt(
-        {
-            type: "input",
-            message: "Enter the employee's first name",
-            name: "firstName",
-        },
-        {
-            type: "input",
-            message: "Enter the employee's last name",
-            name: "lastName",
-        },
-        {
-            type: "list",
-            message: "Enter the employee's role",
-            name: "role",
-            choices: getEmployeeRoles()
-        },
-        {
-            type: "list",
-            message: "Enter the employee's manager",
-            name: "manager",
-            choices: getManagerNames()
-        }
+        [
+            {
+                type: "input",
+                message: "Enter the employee's first name",
+                name: "firstName",
+            },
+            {
+                type: "input",
+                message: "Enter the employee's last name",
+                name: "lastName",
+            },
+            {
+                type: "list",
+                message: "Enter the employee's role",
+                name: "role",
+                choices: getEmployeeRoles()
+            },
+            {
+                type: "list",
+                message: "Enter the employee's manager",
+                name: "manager",
+                choices: getManagerNames()
+            }
+        ]
     ).then((response) => {
         addNewEmployeeToDB(response.firstName, response.lastName, response.role, response.manager);
     }).catch((error) => {
@@ -116,20 +122,22 @@ const createNewEmployee = () => {
 //this function handles the prompt for updating an employee's role
 const updateEmployeeRole = () => {
     inquirer.prompt(
-        {
-            type: "list",
-            message: "Which employee to update?",
-            name: "employeeName",
-            choices: getEmployeeNames()
-        },
-        {
-            type: "list",
-            message: "What is the employee's new role?",
-            name: "manager",
-            choices: getEmployeeRoles()
-        }
+        [
+            {
+                type: "list",
+                message: "Which employee to update?",
+                name: "employee",
+                choices: getEmployeeNames()
+            },
+            {
+                type: "list",
+                message: "What is the employee's new role?",
+                name: "role",
+                choices: getEmployeeRoles()
+            }
+        ]
     ).then((response) => {
-        addNewEmployeeToDB(response.firstName, response.lastName, response.role, response.manager);
+        handleUpdateEmployeeRole(response.employee, response.role);
     }).catch((error) => {
         console.log(error);
     });
@@ -137,23 +145,24 @@ const updateEmployeeRole = () => {
 
 //this function selects what to do based on the users response
 const handleResponse = (response) => {
-    switch(response) {
-        case "View All Departments" : showDepartmentNames();
-        break;
-        case "View All Roles" : showRoles();
-        break;
-        case "View All Employees" : showEmployees();
-        break;
-        case "Add A Department" : createNewDepartment();
-        break;
-        case "Add A Role" : createNewRole();
-        break;
-        case "Add An Employee" : createNewEmployee();
-        break;
-        case "Update Employee Role" : updateEmployeeRole();
-        break;
-        default: 
-        return;
+    switch (response) {
+        case "View All Departments": showDepartmentNames();
+            break;
+        case "View All Roles": showRoles();
+            break;
+        case "View All Employees": showEmployees();
+            break;
+        case "Add A Department": createNewDepartment();
+            break;
+        case "Add A Role": createNewRole();
+            break;
+        case "Add An Employee": createNewEmployee();
+            break;
+        case "Update Employee Role": updateEmployeeRole();
+            break;
+        default:
+            db.end();
+            process.exit();//goodbye
     }
 };
 
@@ -171,11 +180,26 @@ const addDepartmentToDB = (name) => {
 };
 
 const getDepartmentNames = () => {
-    
+    let names = [];
+    db.promise().query(`select * from department`).then((response) => {
+        for (let i = 0; i < response[0].length; i++) {
+            names.push(response[0][i].name);
+        }
+    }).catch(console.log);
+    return names;
 };
 
-const addNewRoleToDB = (name, salary, department) => {
-
+const addNewRoleToDB = (title, salary) => {
+    db.query(`insert into role (title, salary) values ("${title}", "${salary}")`, (err, results) => {
+        if (err) {
+            console.err(err);
+        }
+        else {
+            //console.info(results);
+            console.info(`${title} role with ${salary} salary added to the db`);
+            getUserInput();
+        }
+    });
 };
 
 const addNewEmployeeToDB = (firstName, lastName, role, manager) => {
@@ -197,7 +221,7 @@ const getEmployeeNames = () => {
 const showDepartmentNames = () => {
     db.promise().query(`select * from department`).then((response) => {
         console.table(response[0]);
-    }).catch(console.log).then(() => db.end());
+    }).catch(console.log);
     getUserInput();
 };
 
