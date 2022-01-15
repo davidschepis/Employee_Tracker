@@ -166,19 +166,15 @@ const handleResponse = (response) => {
     }
 };
 
+//handles the sql commands to add a new department
 const addDepartmentToDB = (name) => {
-    db.query(`insert into department (name) values ("${name}")`, (err, results) => {
-        if (err) {
-            console.err(err);
-        }
-        else {
-            //console.info(results);
-            console.info(`${name} department added to the db`);
-            getUserInput();
-        }
-    });
+    db.promise().query(`insert into department (name) values ("${name}")`).then((response) => {
+        console.info(`${name} department added to the db`);
+        getUserInput();
+    })
 };
 
+//uses sql to return all department names from the database in an array
 const getDepartmentNames = () => {
     let names = [];
     db.promise().query(`select * from department`).then((response) => {
@@ -189,16 +185,14 @@ const getDepartmentNames = () => {
     return names;
 };
 
-const addNewRoleToDB = (title, salary) => {
-    db.query(`insert into role (title, salary) values ("${title}", "${salary}")`, (err, results) => {
-        if (err) {
-            console.err(err);
-        }
-        else {
-            //console.info(results);
+//adds a new role to the role table
+const addNewRoleToDB = (title, salary, department) => {
+    db.promise().query(`select department.id from department where department.name = "${department}"`).then((response) => {
+        department = response[0][0].id;
+        db.promise().query(`insert into role (title, salary, department_id) values ("${title}", "${salary}", "${department}")`).then((response) => {
             console.info(`${title} role with ${salary} salary added to the db`);
             getUserInput();
-        }
+        });
     });
 };
 
@@ -218,6 +212,7 @@ const getEmployeeNames = () => {
 
 };
 
+//displays all departments in table
 const showDepartmentNames = () => {
     db.promise().query(`select * from department`).then((response) => {
         console.table(response[0]);
@@ -225,8 +220,12 @@ const showDepartmentNames = () => {
     getUserInput();
 };
 
+//displays all roles in table
 const showRoles = () => {
-
+    db.promise().query(`select * from role`).then((response) => {
+        console.table(response[0]);
+    }).catch(console.log);
+    getUserInput();
 };
 
 const showEmployees = () => {
