@@ -179,13 +179,13 @@ const addDepartmentToDB = (name) => {
 const getDepartmentNames = async () => {
     return new Promise(resolve => {
         let names = [];
-    db.promise().query(`select * from department`)
-        .then((response) => {
-            for (let i = 0; i < response[0].length; i++) {
-                names.push(response[0][i].name);
-            }
-        }).catch(console.log);
-    resolve(names);
+        db.promise().query(`select * from department`)
+            .then((response) => {
+                for (let i = 0; i < response[0].length; i++) {
+                    names.push(response[0][i].name);
+                }
+            }).catch(console.log);
+        resolve(names);
     });
 };
 
@@ -203,7 +203,7 @@ const addNewRoleToDB = (title, salary, department) => {
 
 //adds a new employee to the employee table
 const addNewEmployeeToDB = (firstName, lastName, role, manager) => {
-    const managerDetails = manager.split(" ");
+    const managerDetails = getName(manager);
     db.promise().query(`select employee.id from employee where employee.first_name="${managerDetails[0]}" and employee.last_name="${managerDetails[1]}"`)
         .then((response) => {
             let id = 0;
@@ -265,6 +265,32 @@ const getEmployeeNames = () => {
     })
 };
 
+//updates an employee to have a new role
+const handleUpdateEmployeeRole = async (employee, role) => {
+    let roleID = await getRoleID(role);
+    let name = getName(employee);
+    db.promise().query(`update employee set role_id=${roleID} where employee.first_name="${name[0]}" and employee.last_name="${name[1]}"`)
+        .then((response) => {
+            console.info(`Employee ${employee} updated to role ${role}`);
+        });
+        getUserInput();
+};
+
+//helper function to get a role id from role name
+const getRoleID = (role) => {
+    return new Promise(resolve => {
+        db.promise().query(`select role.id from role where role.title="${role}"`)
+            .then((response) => {
+                resolve(response[0][0].id);
+            });
+    });
+};
+
+//simply splits a string based on a space
+const getName = (employee) => {
+    return employee.split(" ");
+};
+
 //displays all departments in table
 const showDepartmentNames = async () => {
     await db.promise().query(`select * from department`)
@@ -283,6 +309,7 @@ const showRoles = async () => {
     getUserInput();
 };
 
+//displays all employees in table
 const showEmployees = async () => {
     await db.promise().query(`select * from employee`)
         .then((response) => {
