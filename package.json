@@ -19,7 +19,6 @@
   "dependencies": {
     "console.table": "^0.10.0",
     "inquirer": "^8.2.0",
-    "mysql2": "^2.3.3",
-    "readline-sync": "^1.4.10"
+    "mysql2": "^2.3.3"
   }
 }

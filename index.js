@@ -13,7 +13,6 @@ const db = mysql.createConnection({
     console.log("Connected to DB")
 );
 
-
 //this function prompts the user for input from the console
 const getUserInput = () => {
     inquirer.prompt(
@@ -30,6 +29,7 @@ const getUserInput = () => {
                     "Add A Role",
                     "Add An Employee",
                     "Update Employee Role",
+                    "View Total Utilized Budget By Department",
                     "Quit"
                 ]
             }
@@ -143,6 +143,24 @@ const updateEmployeeRole = async () => {
     });
 };
 
+//shows the combined salaries for a user selected department
+const viewBudget = async () => {
+    inquirer.prompt(
+        [
+            {
+                type: "list",
+                message: "Please select a department to view their total utilized budget",
+                name: "department",
+                choices: await getDepartmentNames()
+            }
+        ]
+    ).then((response) => {
+        showBudget(response.department);
+    }).catch((error) => {
+        console.log(error);
+    });
+}
+
 //this function selects what to do based on the users response
 const handleResponse = (response) => {
     switch (response) {
@@ -160,6 +178,8 @@ const handleResponse = (response) => {
             break;
         case "Update Employee Role": updateEmployeeRole();
             break;
+        case "View Total Utilized Budget By Department": viewBudget();
+            break;
         default:
             db.end();
             process.exit();//goodbye
@@ -176,7 +196,7 @@ const addDepartmentToDB = (name) => {
 };
 
 //uses sql to return all department names from the database in an array
-const getDepartmentNames = async () => {
+const getDepartmentNames = () => {
     return new Promise(resolve => {
         let names = [];
         db.promise().query(`select * from department`)
@@ -184,8 +204,8 @@ const getDepartmentNames = async () => {
                 for (let i = 0; i < response[0].length; i++) {
                     names.push(response[0][i].name);
                 }
+                resolve(names);
             }).catch(console.log);
-        resolve(names);
     });
 };
 
@@ -195,7 +215,7 @@ const addNewRoleToDB = (title, salary, department) => {
         .then((response) => {
             department = response[0][0].id;
             db.promise().query(`insert into role (title, salary, department_id) values ("${title}", "${salary}", "${department}")`).then((response) => {
-                console.info(`${title} role with ${salary} salary added to the db`);
+                console.info(`${title} role with ${salary} salary in department ${department} added to the db`);
                 getUserInput();
             });
         });
@@ -231,8 +251,8 @@ const getEmployeeRoles = () => {
                 for (let i = 0; i < response[0].length; i++) {
                     roles.push(response[0][i].title);
                 }
+                resolve(roles);
             }).catch(console.log);
-        resolve(roles);
     });
 };
 
@@ -273,7 +293,7 @@ const handleUpdateEmployeeRole = async (employee, role) => {
         .then((response) => {
             console.info(`Employee ${employee} updated to role ${role}`);
         });
-        getUserInput();
+    getUserInput();
 };
 
 //helper function to get a role id from role name
@@ -314,6 +334,37 @@ const showEmployees = async () => {
     await db.promise().query(`select * from employee`)
         .then((response) => {
             console.table(response[0]);
+        }).catch(console.log);
+    getUserInput();
+};
+
+//shows the budget for a specified department
+const showBudget = async (department) => {
+    let query = "";
+    query += `select role.id, role.salary from role where department_id=(`;
+    query += `select department.id from department where department.name="${department}")`;
+    await db.promise().query(query)
+        .then((response1) => {
+            db.promise().query("select * from employee")
+                .then((response2) => {
+                    let employees = [];
+                    for (let i = 0; i < response2[0].length; i++) {
+                        for (let x = 0; x < response1[0].length; x++) {
+                            if (response1[0][x].id === response2[0][i].role_id) {
+                                employees.push(response2[0][i]);
+                            }
+                        }
+                    }
+                    let total = 0;
+                    for (let i = 0; i < response1[0].length; i++) {
+                        for (let x = 0; x < employees.length; x++) {
+                            if (employees[x].role_id === response1[0][i].id) {
+                                total += parseInt(response1[0][i].salary);
+                            }
+                        }
+                    }
+                    console.table({[`Total_Utilized_Budget_for_department_${department}`] : total});
+                }).catch(console.log);
         }).catch(console.log);
     getUserInput();
 };
