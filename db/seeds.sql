@@ -9,3 +9,6 @@ insert into employee (first_name, last_name, role_id, manager_id) values
 ("Morty", "James", 1, 0),
 ("Beave", "Slabby", 2, 1),
 ("Drunky", "McDrunk", 3, 1);
+
+insert into employee (first_name, last_name, role_id) values
+("Morty", "James", 1)

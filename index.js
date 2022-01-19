@@ -324,7 +324,7 @@ const showDepartmentNames = async () => {
 
 //displays all roles in table
 const showRoles = async () => {
-    await db.promise().query(`select * from role`)
+    await db.promise().query(`select r.id, r.title, d.name as department, r.salary from role as r join department as d on r.department_id=d.id`)
         .then((response) => {
             console.table(response[0]);
         }).catch(console.log);
@@ -333,7 +333,10 @@ const showRoles = async () => {
 
 //displays all employees in table
 const showEmployees = async () => {
-    await db.promise().query(`select * from employee`)
+    let query = `select e.id, e.first_name, e.last_name, t.title, t.name as department, t.salary 
+    from employee as e join (select r.id as id, r.title, d.name, r.salary from role as r join department as d on r.department_id=d.id) as t on e.role_id=t.id`;
+    let query = ``;
+    await db.promise().query(query)
         .then((response) => {
             console.table(response[0]);
         }).catch(console.log);
