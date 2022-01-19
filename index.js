@@ -2,6 +2,7 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const cTable = require("console.table");
+const art = require("ascii-art");
 
 //setup db
 const db = mysql.createConnection({
@@ -188,11 +189,11 @@ const handleResponse = (response) => {
 
 //handles the sql commands to add a new department
 const addDepartmentToDB = (name) => {
-    db.promise().query(`insert into department (name) values ("${name}")`)
+    db.promise().query(`insert into department (name) values (?)`, name)
         .then((response) => {
             console.info(`${name} department added to the db`);
             getUserInput();
-        })
+        }).catch(console.log());
 };
 
 //uses sql to return all department names from the database in an array
@@ -205,41 +206,42 @@ const getDepartmentNames = () => {
                     names.push(response[0][i].name);
                 }
                 resolve(names);
-            }).catch(console.log);
+            }).catch(console.log());
     });
 };
 
 //adds a new role to the role table
 const addNewRoleToDB = (title, salary, department) => {
-    db.promise().query(`select department.id from department where department.name = "${department}"`)
+    db.promise().query(`select department.id from department where department.name = ?`, department)
         .then((response) => {
             department = response[0][0].id;
-            db.promise().query(`insert into role (title, salary, department_id) values ("${title}", "${salary}", "${department}")`).then((response) => {
-                console.info(`${title} role with ${salary} salary in department ${department} added to the db`);
-                getUserInput();
-            });
-        });
+            db.promise().query(`insert into role (title, salary, department_id) values (?, ?, ?)`, [title, salary, department])
+                .then((response) => {
+                    console.info(`${title} role with ${salary} salary in department ${department} added to the db`);
+                    getUserInput();
+                }).catch(console.log());
+        }).catch(console.log());
 };
 
 //adds a new employee to the employee table
 const addNewEmployeeToDB = (firstName, lastName, role, manager) => {
     const managerDetails = getName(manager);
-    db.promise().query(`select employee.id from employee where employee.first_name="${managerDetails[0]}" and employee.last_name="${managerDetails[1]}"`)
+    db.promise().query(`select employee.id from employee where employee.first_name=? and employee.last_name=?`, [managerDetails[0], managerDetails[1]])
         .then((response) => {
             let id = 0;
             if (manager !== "None") {
                 id = response[0][0].id;
             }
-            db.promise().query(`select role.id from role where role.title="${role}"`)
+            db.promise().query(`select role.id from role where role.title=?`, role)
                 .then((response) => {
                     let roleID = response[0][0].id;
-                    db.promise().query(`insert into employee (first_name, last_name, role_id, manager_id) values ("${firstName}", "${lastName}", "${roleID}", "${id}")`)
+                    db.promise().query(`insert into employee (first_name, last_name, role_id, manager_id) values (?, ?, ?, ?)`, [firstName, lastName, roleID, id])
                         .then((response) => {
                             console.info(`${firstName} ${lastName} RoleID: ${roleID} ManagerID: ${id} added to the db`);
                             getUserInput();
-                        });
-                });
-        });
+                        }).catch(console.log());
+                }).catch(console.log());
+        }).catch(console.log());
 };
 
 //returns all roles as an array
@@ -281,28 +283,28 @@ const getEmployeeNames = () => {
                     names.push(response[0][i].first_name + " " + response[0][i].last_name);
                 }
                 resolve(names);
-            })
-    })
+            }).catch(console.log());
+    });
 };
 
 //updates an employee to have a new role
 const handleUpdateEmployeeRole = async (employee, role) => {
     let roleID = await getRoleID(role);
     let name = getName(employee);
-    db.promise().query(`update employee set role_id=${roleID} where employee.first_name="${name[0]}" and employee.last_name="${name[1]}"`)
+    db.promise().query(`update employee set role_id=? where employee.first_name=? and employee.last_name=?`, [roleID, name[0], name[1]])
         .then((response) => {
             console.info(`Employee ${employee} updated to role ${role}`);
-        });
+        }).catch(console.log());
     getUserInput();
 };
 
 //helper function to get a role id from role name
 const getRoleID = (role) => {
     return new Promise(resolve => {
-        db.promise().query(`select role.id from role where role.title="${role}"`)
+        db.promise().query(`select role.id from role where role.title=`, role)
             .then((response) => {
                 resolve(response[0][0].id);
-            });
+            }).catch(console.log());
     });
 };
 
@@ -363,11 +365,18 @@ const showBudget = async (department) => {
                             }
                         }
                     }
-                    console.table({[`Total_Utilized_Budget_for_department_${department}`] : total});
+                    console.table({ [`Total_Utilized_Budget_for_department_${department}`]: total });
                 }).catch(console.log);
         }).catch(console.log);
     getUserInput();
 };
 
-//initialize app
-getUserInput();
+//logo stuff
+art.font("Employee_Tracker", "doom")
+    .then((rendered) => {
+        console.info(rendered);
+    }).catch((err) => {
+        console.log(err);
+    })
+//initialize app after 3 seconds to show logo
+setTimeout(() => { getUserInput() }, 3000);
