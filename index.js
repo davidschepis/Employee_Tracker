@@ -228,18 +228,25 @@ const addNewEmployeeToDB = (firstName, lastName, role, manager) => {
     const managerDetails = getName(manager);
     db.promise().query(`select employee.id from employee where employee.first_name=? and employee.last_name=?`, [managerDetails[0], managerDetails[1]])
         .then((response) => {
-            let id = 0;
-            if (manager !== "None") {
-                id = response[0][0].id;
-            }
             db.promise().query(`select role.id from role where role.title=?`, role)
                 .then((response) => {
+                    let id = 0;
                     let roleID = response[0][0].id;
-                    db.promise().query(`insert into employee (first_name, last_name, role_id, manager_id) values (?, ?, ?, ?)`, [firstName, lastName, roleID, id])
-                        .then((response) => {
-                            console.info(`${firstName} ${lastName} RoleID: ${roleID} ManagerID: ${id} added to the db`);
-                            getUserInput();
-                        }).catch(console.log());
+                    if (manager !== "None") {
+                        id = response[0][0].id;
+                        db.promise().query(`insert into employee (first_name, last_name, role_id, manager_id) values (?, ?, ?, ?)`, [firstName, lastName, roleID, id])
+                            .then((response) => {
+                                console.info(`${firstName} ${lastName} RoleID: ${roleID} ManagerID: ${id} added to the db`);
+                                getUserInput();
+                            }).catch(console.log());
+                    }
+                    else {
+                        db.promise().query(`insert into employee (first_name, last_name, role_id) values (?, ?, ?)`, [firstName, lastName, roleID])
+                            .then((response) => {
+                                console.info(`${firstName} ${lastName} RoleID: ${roleID} ManagerID: ${manager} added to the db`);
+                                getUserInput();
+                            }).catch(console.log());
+                    }
                 }).catch(console.log());
         }).catch(console.log());
 };
@@ -324,18 +331,21 @@ const showDepartmentNames = async () => {
 
 //displays all roles in table
 const showRoles = async () => {
-    await db.promise().query(`select r.id, r.title, d.name as department, r.salary from role as r join department as d on r.department_id=d.id`)
+    await db.promise().query(`select r.id, r.title, d.name as department, r.salary from role as r join department as d on r.department_id=d.id order by r.id asc`)
         .then((response) => {
             console.table(response[0]);
         }).catch(console.log);
     getUserInput();
 };
 
-//displays all employees in table
+//displays all employees in table used join-ception along with union to get all the data in one sql statement
 const showEmployees = async () => {
-    let query = `select e.id, e.first_name, e.last_name, t.title, t.name as department, t.salary 
-    from employee as e join (select r.id as id, r.title, d.name, r.salary from role as r join department as d on r.department_id=d.id) as t on e.role_id=t.id`;
-    let query = ``;
+    let queryInner = `(select e.id, e.first_name, e.last_name, e.role_id, concat(f.first_name, ' ', f.last_name) as manager from employee as e join employee as f on e.manager_id=f.id)`;
+    queryInner += `union`;
+    queryInner += `(select e.id, e.first_name, e.last_name, e.role_id, concat('none') as manager from employee as e where manager_id is null)`;
+    let query = `select a.id, a.first_name, a.last_name, t.title, t.name as department, t.salary, a.manager
+    from (` + queryInner + `) as a join (select r.id as id, r.title, d.name, r.salary from role as r join department as d on r.department_id=d.id) as t on a.role_id=t.id`;
+    query += ` order by a.id asc`;
     await db.promise().query(query)
         .then((response) => {
             console.table(response[0]);
