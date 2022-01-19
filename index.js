@@ -161,7 +161,6 @@ const viewBudget = async () => {
         console.log(error);
     });
 }
-
 //this function selects what to do based on the users response
 const handleResponse = (response) => {
     switch (response) {
@@ -338,7 +337,7 @@ const showRoles = async () => {
     getUserInput();
 };
 
-//displays all employees in table used join-ception along with union to get all the data in one sql statement
+//displays all employees in table uses join-ception along with union to get all the data in one sql statement
 const showEmployees = async () => {
     let queryInner = `(select e.id, e.first_name, e.last_name, e.role_id, concat(f.first_name, ' ', f.last_name) as manager from employee as e join employee as f on e.manager_id=f.id)`;
     queryInner += `union`;
