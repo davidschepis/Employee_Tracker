@@ -377,7 +377,8 @@ const showBudget = async (department) => {
                             }
                         }
                     }
-                    console.table({ [`Total_Utilized_Budget_for_department_${department}`]: total });
+                    let values = [[`Total_Utilized_Budget_for_department_${department}`, total]];
+                    console.table(['Title', 'Total'], values);
                     getUserInput();
                 }).catch(console.log);
         }).catch(console.log);
