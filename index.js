@@ -226,22 +226,22 @@ const addNewRoleToDB = (title, salary, department) => {
 const addNewEmployeeToDB = (firstName, lastName, role, manager) => {
     const managerDetails = getName(manager);
     db.promise().query(`select employee.id from employee where employee.first_name=? and employee.last_name=?`, [managerDetails[0], managerDetails[1]])
-        .then((response) => {
+        .then((responseMan) => {
             db.promise().query(`select role.id from role where role.title=?`, role)
-                .then((response) => {
+                .then((responseRole) => {
                     let id = 0;
-                    let roleID = response[0][0].id;
+                    let roleID = responseRole[0][0].id;
                     if (manager !== "None") {
-                        id = response[0][0].id;
+                        id = responseMan[0][0].id;
                         db.promise().query(`insert into employee (first_name, last_name, role_id, manager_id) values (?, ?, ?, ?)`, [firstName, lastName, roleID, id])
-                            .then((response) => {
+                            .then((responseEE) => {
                                 console.info(`${firstName} ${lastName} RoleID: ${roleID} ManagerID: ${id} added to the db`);
                                 getUserInput();
                             }).catch(console.log());
                     }
                     else {
                         db.promise().query(`insert into employee (first_name, last_name, role_id) values (?, ?, ?)`, [firstName, lastName, roleID])
-                            .then((response) => {
+                            .then((responseEE) => {
                                 console.info(`${firstName} ${lastName} RoleID: ${roleID} ManagerID: ${manager} added to the db`);
                                 getUserInput();
                             }).catch(console.log());
@@ -307,7 +307,7 @@ const handleUpdateEmployeeRole = async (employee, role) => {
 //helper function to get a role id from role name
 const getRoleID = (role) => {
     return new Promise(resolve => {
-        db.promise().query(`select role.id from role where role.title=`, role)
+        db.promise().query(`select role.id from role where role.title=?`, role)
             .then((response) => {
                 resolve(response[0][0].id);
             }).catch(console.log());
