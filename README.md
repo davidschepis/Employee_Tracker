@@ -21,6 +21,8 @@ Allows a user to update a database of employees, managers, and roles
  ## Links
 https://github.com/davidschepis/Employee_Tracker
 
+https://drive.google.com/file/d/15eRKAMbCGg26KymAVeLQJRxGbHn0sbjP/view
+
  ## Installation
 To install necessary dependencies, run the following command:
 
